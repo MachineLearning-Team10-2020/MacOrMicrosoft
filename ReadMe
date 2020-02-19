@@ -1,0 +1,232 @@
+import libraries, display options and import excel file, define def scree_plot, def inertia_plot
+
+drop_list=['surveyID', 'What laptop do you currently have?',
+'What laptop would you buy in next assuming if all laptops cost the same?',
+'What program are you in?', 'What is your age?', 'Gender', 'What is your nationality? ',
+'What is your ethnicity?']
+
+df_2 = df.drop(drop_list, axis=1)
+
+# List of the variables that need a scale change (numbers)
+list_inverse=[1,3,5,7,9,11,13,15,17,19,21,23,25,27,28,29,31,33,35,37,38,43,45,48,51,61,65]
+
+# For loop to change the scale of the answers
+for column in list_inverse:
+    a=0
+    for i in df_2.iloc[: , column]:
+        df_2.iloc[a, column]= (6-i)
+        a+=1
+
+df_2['Respond effectively to multiple priorities']= round((df_2['Respond effectively to multiple priorities']+  
+df_2['Respond effectively to multiple priorities.1'])/2+0.1,0)
+(Do this for "Take initiative even when circumstances, objectives, or rules aren't clear 
+Encourage direct and open discussions and drop .1)
+
+# Creating new columns for the big 5
+# Extroversion
+list_group=[]
+for i in range(0,50,5):
+    list_group.append(i)
+    
+df_2['Extroversion']=round(np.mean(df_2.iloc[:,list_group],axis=1),2)
+
+
+# Agreeableness
+list_group=[]
+for i in range(1,50,5):
+    list_group.append(i)
+    
+df_2['Agreeableness']=round(np.mean(df_2.iloc[:,list_group],axis=1),2)
+
+
+# Conscientiousness 
+list_group=[]
+for i in range(2,50,5):
+    list_group.append(i)
+    
+df_2['Conscientiousness']=round(np.mean(df_2.iloc[:,list_group],axis=1),2)
+
+
+# Neuroticism 
+list_group=[]
+for i in range(3,50,5):
+    list_group.append(i)
+    
+df_2['Neuroticism']=round(np.mean(df_2.iloc[:,list_group],axis=1),2)
+
+
+# Openness
+list_group=[]
+for i in range(4,50,5):
+    list_group.append(i)
+    
+df_2['Openness']=round(np.mean(df_2.iloc[:,list_group],axis=1),2)
+
+
+# Creating new columns for the Hult DNA
+
+df_2['Professional Mindset']=round(np.mean(df_2.iloc[:,50:56],axis=1),2)
+df_2['Influence with skill']=round(np.mean(df_2.iloc[:,56:62],axis=1),2)
+df_2['Results through collaboration']=round(np.mean(df_2.iloc[:,62:68],axis=1),2)
+
+
+
+# scaling the data
+scaler = StandardScaler()
+
+# checking pre- and post-scaling variance
+
+scaler.fit(df_3)
+X_scaled = scaler.fit_transform(df_3)
+df_3_scaled = pd.DataFrame(X_scaled)
+df_3_scaled.columns = df_3.columns
+
+print(pd.np.var(df_3), '\n')
+print(pd.np.var(df_3_scaled))
+
+# Instantiating a PCA object 
+pca = PCA(n_components=None,
+          random_state = 222)
+
+# FITTING and TRANSFORMING the scaled data
+pca_fit = pca.fit_transform(df_3_scaled)
+
+# calling the scree_plot function
+scree_plot(pca_object = pca)
+
+factors = pd.DataFrame(pd.np.transpose(pca.components_))
+
+factors = factors.set_index(df_3_scaled.columns)
+
+factors
+
+# Instantiating a new model to capture at least 80% of the variance
+pca_80 = PCA(0.8,
+            random_state = 802)
+
+# FITTING and TRANSFORMING the purchases_scaled
+pca_80_fit = pca_80.fit_transform(df_3_scaled)
+
+
+# calling the scree_plot function
+scree_plot(pca_object=pca_80)
+
+# Instantiating a new model to capture at least 80% of the variance
+pca_80 = PCA(0.8,
+            random_state = 802)
+
+# FITTING and TRANSFORMING the purchases_scaled
+pca_80_fit = pca_80.fit_transform(df_3_scaled)
+
+
+# calling the scree_plot function
+scree_plot(pca_object=pca_80)
+
+# analyzing factor strengths per client
+X_pca_80 = pca_80.transform(df_3_scaled)
+
+# converting to a DataFrame
+X_pca_80_df = pd.DataFrame(X_pca_80)
+
+# checking the results
+X_pca_80_df
+
+# Intantiating a StandardScaler object
+scaler = StandardScaler()
+
+
+# FITTING the scaler with the data
+scaler.fit(X_pca_80_df)
+
+
+# TRANSFORMING our data after fit
+X_scaled_2 = scaler.transform(X_pca_80_df)
+
+
+# converting scaled data into a DataFrame
+X_scaled_df = pd.DataFrame(X_scaled_2)
+
+
+# reattaching column names
+X_scaled_df.columns = X_pca_80_df.columns
+
+
+# checking post-scaling variance
+print(pd.np.var(X_scaled_df))
+
+inertia_plot(data=X_scaled_df)
+
+# INSTANTIATING a k-Means object
+kmean = KMeans(n_clusters = 5,
+             random_state = 222)
+
+
+# fitting the object to the data
+kmean.fit(X_scaled_df)
+
+
+# converting the clusters to a DataFrame
+kmean_df = pd.DataFrame({'Cluster': kmean.labels_})
+
+
+# checking the results
+print(kmean_df.iloc[: , 0].value_counts())
+
+# storing cluster centers
+centroids_pca = kmean.cluster_centers_
+
+# converting cluster centers into a DataFrame
+centroids_pca_df = pd.DataFrame(centroids_pca)
+
+centroids_pca_df
+
+# Creating column names
+
+list_colum=[]
+
+for i in range(1,7):
+    list_colum.append(str('g' + str(i)))
+
+# renaming principal components
+centroids_pca_df.columns = list_colum
+
+
+# checking results (clusters = rows, pc = columns)
+centroids_pca_df.round(2)
+
+# concatinating cluster memberships with principal components
+df_4 = pd.concat([kmean_df, 
+                  X_pca_80_df],
+                 axis = 1)
+
+# concatenating demographic information with pca-clusters
+final_df = pd.concat([df.loc[ : , drop_list],
+                                  df_4],
+                                  axis = 1)
+final_df
+
+ 
+# Creating column names
+list_colum2=[]
+for i in range(1,7):
+    list_colum2.append(str('Group' + str(i)))
+list_colum3=['id','brand','next brand', 'program','age', 'gender','nationality', 'ethnicity', 'cluster']
+for i in list_colum2:
+    list_colum3.append(i)
+# renaming columns
+final_df.columns = list_colum3
+
+# checking the results
+final_df.head(20)
+
+# Group 1
+
+fig, ax = plt.subplots(figsize = (12, 8))
+sns.violinplot(x = 'next brand',
+            y = 'Group1',
+            hue = 'cluster',
+            data = final_df)
+
+plt.ylim(-5, 10)
+plt.tight_layout()
+plt.show()
